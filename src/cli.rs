@@ -27,15 +27,15 @@ pub enum ConfigCommands {
     /// 设置API密钥、API地址和模型名称
     Set {
         /// API密钥
-        #[arg(long)]
+        #[arg(long, short = 'k')]
         api_key: Option<String>,
 
         /// API地址
-        #[arg(long)]
+        #[arg(long, short = 'u')]
         api_url: Option<String>,
 
         /// 模型名称
-        #[arg(long)]
+        #[arg(long, short = 'm')]
         model: Option<String>,
     },
 }

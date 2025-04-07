@@ -27,13 +27,32 @@ pub fn update_config(
         Config::default()
     };
 
-    config.api_key = api_key;
-    config.api_url = api_url;
-    config.model = model;
+    config.api_key = api_key.or(config.api_key);
+    config.api_url = api_url.or(config.api_url);
+    config.model = model.or(config.model);
 
     let json = serde_json::to_string_pretty(&config)?;
     fs::write(config_path, json)?;
+
+    let _ = show_config();
     
-    println!("配置更新成功!");
+    Ok(())
+}
+
+pub fn show_config() -> anyhow::Result<()> {
+    let config_path = get_config_path();
+    println!("配置文件路径: {}", config_path.display());
+
+    if config_path.exists() {
+        let content = fs::read_to_string(&config_path)?;
+        let config: Config = serde_json::from_str(&content)?;
+
+        println!("当前配置:");
+        println!("  API Key: {}", config.api_key.as_deref().unwrap_or("未设置"));
+        println!("  API URL: {}", config.api_url.as_deref().unwrap_or("未设置"));
+        println!("  Model: {}", config.model.as_deref().unwrap_or("未设置"));
+    } else {
+        println!("配置文件不存在!");
+    }
     Ok(())
 }

@@ -1,5 +1,4 @@
 use clap::Parser;
-use std::fs;
 
 mod chat;
 mod cli;
@@ -28,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
 fn handle_command(command: cli::Commands) -> anyhow::Result<()> {
     match command {
         cli::Commands::Config { command } => match command {
-            cli::ConfigCommands::Show => show_config()?,
+            cli::ConfigCommands::Show => config::show_config()?,
             cli::ConfigCommands::Set { api_key, api_url, model } => {
                 let config = config::Config { 
                     api_key, 
@@ -43,16 +42,3 @@ fn handle_command(command: cli::Commands) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn show_config() -> anyhow::Result<()> {
-    let config_path = config::get_config_path();
-    println!("配置文件路径: {}", config_path.display());
-
-    if config_path.exists() {
-        let content = fs::read_to_string(&config_path)?;
-        let config: config::Config = serde_json::from_str(&content)?;
-        println!("当前配置: {:#?}", config);
-    } else {
-        println!("配置文件不存在!");
-    }
-    Ok(())
-}
