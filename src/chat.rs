@@ -7,7 +7,7 @@ use std::io::Write;
 use std::time::Duration;
 use tokio::time;
 
-pub async fn send_chat_request(message: &str) -> Result<()> {
+pub async fn send_chat_request(message: &str) -> Result<String> {
     let config_path = get_config_path();
     let config_content = fs::read_to_string(config_path)?;
     let config: Config = serde_json::from_str(&config_content)?;
@@ -27,13 +27,16 @@ pub async fn send_chat_request(message: &str) -> Result<()> {
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&json!({
             "model": config.model,
-            "messages": [{"role": "user", "content": message}],
+            "messages": [
+                {"role": "user", "content": message}
+            ],
             "stream": true
         }))
         .send()
         .await?;
 
-    // 使用 text_stream 替代 bytes_stream
+    let mut full_response = String::new();
+    
     while let Some(chunk) = response.chunk().await? {
         let chunk_str = String::from_utf8_lossy(&chunk);
 
@@ -49,6 +52,7 @@ pub async fn send_chat_request(message: &str) -> Result<()> {
                             std::io::stdout().flush().unwrap();
                             time::sleep(Duration::from_millis(20)).await;
                         }
+                        full_response.push_str(content);
                     }
                 }
             }
@@ -61,5 +65,5 @@ pub async fn send_chat_request(message: &str) -> Result<()> {
     }
 
     println!(); // 最后换行
-    Ok(())
+    Ok(full_response)
 }

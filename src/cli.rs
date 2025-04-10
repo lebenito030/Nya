@@ -6,6 +6,19 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     #[arg()]
     pub message: Option<String>,
+    
+    /// 启用交互式对话模式
+    #[arg(long, short = 'i')]
+    pub interactive: bool,
+    
+    /// 禁用分页显示(默认启用)
+    #[arg(long, short = 'P')]
+    pub no_pager: bool,
+    
+    /// 输出格式(plain/markdown)
+    #[arg(long, short = 'f', default_value = "plain")]
+    pub format: String,
+    
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
