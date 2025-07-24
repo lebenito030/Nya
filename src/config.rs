@@ -32,6 +32,11 @@ pub fn update_config(
     config.model = model.or(config.model);
 
     let json = serde_json::to_string_pretty(&config)?;
+    
+    if let Some(parent) = config_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    
     fs::write(config_path, json)?;
 
     let _ = show_config();
