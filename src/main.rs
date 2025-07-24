@@ -1,5 +1,6 @@
 use clap::Parser;
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
+use atty::Stream;
 
 mod chat;
 mod cli;
@@ -11,34 +12,48 @@ async fn main() -> anyhow::Result<()> {
 
     if cli.interactive {
         interactive_loop().await?;
-    } else {
-        // 提前提取所有需要的字段
-        let format = cli.format.clone();
-        let interactive = cli.interactive;
-        let no_pager = cli.no_pager;
-        let message = cli.message;
-        let command = cli.command;
-
-        match message {
-            Some(msg) => {
-                let response = chat::send_chat_request(&msg).await?;
-                print_response(
-                    &response,
-                    &cli::Cli {
-                        message: Some(msg),
-                        interactive,
-                        no_pager,
-                        format,
-                        command: None,
-                    },
-                )?;
-            }
-            None => match command {
-                Some(cmd) => handle_command(cmd)?,
-                None => println!("没有提供任何命令或消息"),
-            },
-        }
+        return Ok(());
     }
+
+    let mut pipe_content = String::new();
+    if !atty::is(Stream::Stdin) {
+        io::stdin().read_to_string(&mut pipe_content)?;
+    }
+
+    let message = match cli.message {
+        Some(msg) => {
+            if !pipe_content.is_empty() {
+                format!("{}\n\n{}", pipe_content, msg)
+            } else {
+                msg
+            }
+        }
+        None => {
+            if !pipe_content.is_empty() {
+                pipe_content
+            } else {
+                // 如果没有管道内容也没有消息，则检查是否有其他命令
+                if let Some(cmd) = cli.command {
+                    handle_command(cmd)?;
+                } else {
+                    println!("没有提供任何命令或消息");
+                }
+                return Ok(());
+            }
+        }
+    };
+
+    let response = chat::send_chat_request(&message).await?;
+    print_response(
+        &response,
+        &cli::Cli {
+            message: Some(message),
+            interactive: cli.interactive,
+            no_pager: cli.no_pager,
+            format: cli.format,
+            command: None,
+        },
+    )?;
 
     Ok(())
 }
@@ -98,4 +113,3 @@ fn handle_command(command: cli::Commands) -> anyhow::Result<()> {
     }
     Ok(())
 }
-
