@@ -21,9 +21,11 @@ pub async fn send_chat_request(message: &str) -> Result<String> {
         .as_ref()
         .ok_or_else(|| anyhow::anyhow!("API密钥未配置"))?;
 
+    let chat_api_url = format!("{}/chat/completions", api_url.trim_end_matches('/'));
+
     let client = reqwest::Client::new();
     let mut response = client
-        .post(api_url)
+        .post(&chat_api_url)
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&json!({
             "model": config.model,
