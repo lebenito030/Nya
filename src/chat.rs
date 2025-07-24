@@ -4,8 +4,6 @@ use reqwest;
 use serde_json::json;
 use std::fs;
 use std::io::Write;
-use std::time::Duration;
-use tokio::time;
 
 pub async fn send_chat_request(message: &str) -> Result<String> {
     let config_path = get_config_path();
@@ -51,8 +49,7 @@ pub async fn send_chat_request(message: &str) -> Result<String> {
                         // 逐字输出，增加一个小延迟增强打字效果
                         for char in content.chars() {
                             print!("{}", char);
-                            std::io::stdout().flush().unwrap();
-                            time::sleep(Duration::from_millis(20)).await;
+                            std::io::stdout().flush()?;
                         }
                         full_response.push_str(content);
                     }
