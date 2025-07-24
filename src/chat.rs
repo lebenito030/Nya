@@ -4,8 +4,6 @@ use reqwest;
 use serde_json::json;
 use std::fs;
 use std::io::Write;
-use std::time::Duration;
-use tokio::time;
 
 pub async fn send_chat_request(message: &str) -> Result<String> {
     let config_path = get_config_path();
@@ -48,12 +46,8 @@ pub async fn send_chat_request(message: &str) -> Result<String> {
                 let json_str = &line[6..];
                 if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(json_str) {
                     if let Some(content) = json_value["choices"][0]["delta"]["content"].as_str() {
-                        // 逐字输出，增加一个小延迟增强打字效果
-                        for char in content.chars() {
-                            print!("{}", char);
-                            std::io::stdout().flush().unwrap();
-                            time::sleep(Duration::from_millis(20)).await;
-                        }
+                        print!("{}", content);
+                        std::io::stdout().flush()?;
                         full_response.push_str(content);
                     }
                 }
