@@ -11,9 +11,9 @@ pub struct Config {
 }
 
 pub fn get_config_path() -> PathBuf {
-    dirs::home_dir()
-        .expect("无法找到用户目录")
-        .join(".config/nya/.nya_config.json")
+    dirs::config_dir()
+        .expect("无法找到用户配置目录")
+        .join("nya/.nya_config.json")
 }
 
 pub fn update_config(
