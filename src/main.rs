@@ -79,19 +79,10 @@ async fn interactive_loop() -> anyhow::Result<()> {
 
 fn print_response(response: &str, cli: &cli::Cli) -> anyhow::Result<()> {
     if !cli.no_pager && response.lines().count() > 10 {
-        // 使用pager显示长内容
-        let mut pager = std::process::Command::new("less")
-            .arg("-RF")
-            .stdin(std::process::Stdio::piped())
-            .spawn()?;
-
-        {
-            let mut stdin = pager.stdin.take().unwrap(); // 获取子进程的标准输入
-            write!(stdin, "{}", response)?; // 写入响应内容
-            // 子进程的输入流会在作用域结束时自动关闭
-        }
-
-        pager.wait()?; // 等待子进程完成
+        pager::Pager::new().setup();
+        println!("{}", response);
+    } else {
+        println!("{}", response);
     }
     Ok(())
 }
