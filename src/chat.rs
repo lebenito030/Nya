@@ -1,11 +1,18 @@
 use crate::config::{Config, get_config_path};
 use anyhow::Result;
 use reqwest;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fs;
 use std::io::Write;
 
-pub async fn send_chat_request(message: &str) -> Result<String> {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Message {
+    pub role: String,
+    pub content: String,
+}
+
+pub async fn send_chat_request(messages: &[Message]) -> Result<String> {
     let config_path = get_config_path();
     let config_content = fs::read_to_string(config_path)?;
     let config: Config = serde_json::from_str(&config_content)?;
@@ -27,9 +34,7 @@ pub async fn send_chat_request(message: &str) -> Result<String> {
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&json!({
             "model": config.model,
-            "messages": [
-                {"role": "user", "content": message}
-            ],
+            "messages": messages,
             "stream": true
         }))
         .send()

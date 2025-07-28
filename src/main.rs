@@ -44,7 +44,11 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    let response = chat::send_chat_request(&message).await?;
+    let messages = vec![chat::Message {
+        role: "user".to_string(),
+        content: message.clone(),
+    }];
+    let response = chat::send_chat_request(messages.as_slice()).await?;
     print_response(
         &response,
         &cli::Cli {
@@ -61,6 +65,7 @@ async fn main() -> anyhow::Result<()> {
 
 async fn interactive_loop() -> anyhow::Result<()> {
     println!("进入交互模式(输入'exit'退出)");
+    let mut history: Vec<chat::Message> = Vec::new();
     loop {
         print!("> ");
         io::stdout().flush()?;
@@ -73,7 +78,20 @@ async fn interactive_loop() -> anyhow::Result<()> {
             break;
         }
 
-        chat::send_chat_request(input).await?;
+        if input.is_empty() {
+            continue;
+        }
+
+        history.push(chat::Message {
+            role: "user".to_string(),
+            content: input.to_string(),
+        });
+
+        let response = chat::send_chat_request(history.as_slice()).await?;
+        history.push(chat::Message {
+            role: "assistant".to_string(),
+            content: response,
+        });
     }
     Ok(())
 }
