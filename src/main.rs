@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::io::{self, Read, Write};
 use atty::Stream;
+use minus::{Pager, LineNumbers};
 
 mod chat;
 mod cli;
@@ -78,9 +79,11 @@ async fn interactive_loop() -> anyhow::Result<()> {
 }
 
 fn print_response(response: &str, cli: &cli::Cli) -> anyhow::Result<()> {
-    if !cli.no_pager && response.lines().count() > 10 {
-        pager::Pager::new().setup();
-        println!("{}", response);
+    if !cli.no_pager && atty::is(Stream::Stdout) && response.lines().count() > 10 {
+        let pager = Pager::new();
+        pager.set_line_numbers(LineNumbers::Enabled)?;
+        pager.push_str(response)?;
+        minus::dynamic_paging(pager)?;
     } else {
         println!("{}", response);
     }
@@ -91,16 +94,20 @@ fn handle_command(command: cli::Commands) -> anyhow::Result<()> {
     match command {
         cli::Commands::Config { command } => match command {
             cli::ConfigCommands::Show => config::show_config()?,
-            cli::ConfigCommands::Set { api_key, api_url, model } => {
-                let config = config::Config { 
-                    api_key, 
-                    api_url, 
-                    model 
+            cli::ConfigCommands::Set {
+                api_key,
+                api_url,
+                model,
+            } => {
+                let config = config::Config {
+                    api_key,
+                    api_url,
+                    model,
                 };
                 config::update_config(config)?;
                 println!("配置更新成功");
             }
-        }
+        },
     }
     Ok(())
 }
