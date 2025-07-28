@@ -2,6 +2,7 @@ use clap::Parser;
 use std::io::{self, Read, Write};
 use atty::Stream;
 use minus::{Pager, LineNumbers};
+use termimad::MadSkin;
 
 mod chat;
 mod cli;
@@ -99,8 +100,9 @@ async fn interactive_loop() -> anyhow::Result<()> {
 fn print_response(response: &str, cli: &cli::Cli) -> anyhow::Result<()> {
     if !cli.no_pager && atty::is(Stream::Stdout) && response.lines().count() > 10 {
         let pager = Pager::new();
+        let skin = MadSkin::default();
         pager.set_line_numbers(LineNumbers::Enabled)?;
-        pager.push_str(response)?;
+        pager.push_str(skin.term_text(response).to_string())?;
         minus::dynamic_paging(pager)?;
     } else {
         println!("{}", response);
