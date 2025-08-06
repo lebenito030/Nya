@@ -104,8 +104,6 @@ fn print_response(response: &str, cli: &cli::Cli) -> anyhow::Result<()> {
         pager.set_line_numbers(LineNumbers::Enabled)?;
         pager.push_str(skin.term_text(response).to_string())?;
         minus::dynamic_paging(pager)?;
-    } else {
-        println!("{}", response);
     }
     Ok(())
 }
